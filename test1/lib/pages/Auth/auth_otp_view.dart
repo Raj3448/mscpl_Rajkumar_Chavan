@@ -4,24 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:test1/constant/app_theme.dart';
 import 'package:zapx/zapx.dart';
 
-
 class AuthOtpView extends StatefulWidget {
+  final String verificationCode;
+
   (String countryCode, String mobileNo) mobileNumberDetails;
-  AuthOtpView({Key? key, required this.mobileNumberDetails}) : super(key: key);
+  AuthOtpView({Key? key, required this.mobileNumberDetails, required this.verificationCode}) : super(key: key);
 
   @override
   State<AuthOtpView> createState() => _AuthOtpViewState();
 }
 
-class _AuthOtpViewState extends State<AuthOtpView> {
+class _AuthOtpViewState extends State<AuthOtpView>
+    with SingleTickerProviderStateMixin {
   late List<FocusNode> _focusNodes;
   late List<TextEditingController> _controllers;
   final int _otpLength = 6;
   bool _isVerify = false;
 
-  String? _verificationCode = '123456';
-
-  late Timer _timer;
+  
   int _remainingSeconds = 170;
 
   void _updateRemainingSeconds(Timer timer) {
@@ -40,6 +40,12 @@ class _AuthOtpViewState extends State<AuthOtpView> {
     return "$minute : $second";
   }
 
+  late AnimationController _animatedcontroller;
+  late Animation<Alignment> _topAlignmentAnimation;
+  late Animation<Alignment> _bottomAlignmentAnimation;
+
+
+
   int currentIndex = 0;
   @override
   void initState() {
@@ -48,6 +54,49 @@ class _AuthOtpViewState extends State<AuthOtpView> {
     _controllers =
         List.generate(_otpLength, (index) => TextEditingController());
     Timer.periodic(const Duration(seconds: 1), _updateRemainingSeconds);
+
+    _animatedcontroller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2));
+
+    _topAlignmentAnimation = TweenSequence<Alignment>([
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topLeft, end: Alignment.topRight),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topRight, end: Alignment.bottomRight),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomLeft, end: Alignment.topLeft),
+          weight: 1),
+    ]).animate(_animatedcontroller);
+
+    _bottomAlignmentAnimation = TweenSequence<Alignment>([
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomLeft, end: Alignment.topLeft),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topLeft, end: Alignment.topRight),
+          weight: 1),
+      TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topRight, end: Alignment.bottomRight),
+          weight: 1),
+    ]).animate(_animatedcontroller);
+
+    _animatedcontroller.repeat();
   }
 
   @override
@@ -56,6 +105,7 @@ class _AuthOtpViewState extends State<AuthOtpView> {
       _focusNodes[i].dispose();
       _controllers[i].dispose();
     }
+    _animatedcontroller.dispose();
     super.dispose();
   }
 
@@ -70,7 +120,7 @@ class _AuthOtpViewState extends State<AuthOtpView> {
       } else {
         _focusNodes[index].unfocus();
         int length = generateOTP.length;
-        if (generateOTP == _verificationCode) {
+        if (generateOTP == widget.verificationCode) {
           setState(() {
             isCorrectOTP = 1; // for green
           });
@@ -131,77 +181,97 @@ class _AuthOtpViewState extends State<AuthOtpView> {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
-                    child: Container(
-                      width: screenSize.width,
-                      height: screenSize.height * 0.17,
-                      decoration: isCorrectOTP != 0
-                          ? BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color:
-                                  isCorrectOTP == 1 ? Colors.green : Colors.red)
-                          : null,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(_otpLength, (index) {
-                              return SizedBox(
-                                width: 50.0,
-                                child: TextField(
-                                  controller: _controllers[index],
-                                  focusNode: _focusNodes[index],
-                                  onChanged: (value) =>
-                                      _onDigitInput(index, value),
-                                  maxLength: 1,
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  onTap: () {
-                                    currentIndex = index;
-                                  },
-                                  decoration: InputDecoration(
-                                      counter: const Offstage(),
-                                      fillColor: const Color(0xFFDCDADA),
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                          borderSide: BorderSide.none),
-                                      filled: true,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              vertical: 15.0),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                      )),
-                                ),
-                              ).paddingOnly(
-                                right: 5,
-                              );
-                            }),
-                          ).paddingOnly(left: 5),
-                          if (isCorrectOTP != 0)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if(isCorrectOTP == 1)
-                                const Icon(
-                                  Icons.verified_outlined,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                Text(
-                                  isCorrectOTP == 1?'Verified':'X Invalid OTP',
-                                  style: AppTheme.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                )
-                              ],
-                            ).paddingOnly(top: 5)
-                        ],
-                      ),
+                    child: AnimatedBuilder(
+                      animation: _animatedcontroller,
+                      builder: (context,_) {
+                        return Container(
+                          width: screenSize.width,
+                          height: screenSize.height * 0.17,
+                          decoration: isCorrectOTP != 0
+                              ? BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  // color:
+                                  //     isCorrectOTP == 1 ? Colors.green : Colors.red
+                                  gradient: LinearGradient(
+                                      colors: isCorrectOTP == 1
+                                          ? [
+                                              const Color(0xFF107714),
+                                              const Color(0xFF0EDA15)
+                                            ]
+                                          : [
+                                              const Color(0xFFFF1100),
+                                              const Color(0xFFC5342A)
+                                            ],
+                                        begin: _topAlignmentAnimation.value,
+                                        end: _bottomAlignmentAnimation.value
+                                        ))
+                              : null,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: List.generate(_otpLength, (index) {
+                                  return SizedBox(
+                                    width: 50.0,
+                                    child: TextField(
+                                      controller: _controllers[index],
+                                      focusNode: _focusNodes[index],
+                                      onChanged: (value) =>
+                                          _onDigitInput(index, value),
+                                      maxLength: 1,
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.center,
+                                      onTap: () {
+                                        currentIndex = index;
+                                      },
+                                      decoration: InputDecoration(
+                                          counter: const Offstage(),
+                                          fillColor: const Color(0xFFDCDADA),
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                              borderSide: BorderSide.none),
+                                          filled: true,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 15.0),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                          )),
+                                    ),
+                                  ).paddingOnly(
+                                    right: 5,
+                                  );
+                                }),
+                              ).paddingOnly(left: 5),
+                              if (isCorrectOTP != 0)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (isCorrectOTP == 1)
+                                      const Icon(
+                                        Icons.verified_outlined,
+                                        color: Colors.white,
+                                      ),
+                                    const SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text(
+                                      isCorrectOTP == 1
+                                          ? 'Verified'
+                                          : 'X Invalid OTP',
+                                      style: AppTheme.copyWith(
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  ],
+                                ).paddingOnly(top: 5)
+                            ],
+                          ),
+                        );
+                      }
                     ),
                   ),
                 ),

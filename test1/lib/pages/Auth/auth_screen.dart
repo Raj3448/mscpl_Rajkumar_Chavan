@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:test1/constant/app_theme.dart';
 import 'package:test1/pages/Auth/auth_otp_view.dart';
@@ -14,7 +15,6 @@ class _AuthScreenState extends State<AuthScreen> {
   String _selectedCountryCode = '+91';
   final TextEditingController _phoneNumberController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
-  final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
   bool selected = false;
 
   @override
@@ -144,7 +144,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         SizedBox(
                           width: screenSize.width * 0.75,
                           child: const Text(
-                              "Allow faydaa to send financial knowledge and critical alerts on your WhatsApp",
+                              "Allow our organization to send financial knowledge and critical alerts on your WhatsApp",
                               style: AppTheme.displayMedium),
                         ).paddingOnly(bottom: 10),
                         Align(
@@ -174,31 +174,42 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var begin = const Offset(1.0, 0.0);
-          var end = Offset.zero;
-          var curve = Curves.bounceInOut;
-          var tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          var offsetAnimation = animation.drive(tween);
-          return SlideTransition(
-            position: offsetAnimation,
-            child: child,
-          );
-        },
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return AuthOtpView(
-            mobileNumberDetails: (
-              _selectedCountryCode,
-              _phoneNumberController.text
+  void _submit() async {
+    FirebaseAuth _auth = FirebaseAuth.instance;
+
+    await _auth.verifyPhoneNumber(
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException exception) {},
+        codeSent: (String verificationCode, int? resendToken) {
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 500),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                var begin = const Offset(1.0, 0.0);
+                var end = Offset.zero;
+                var curve = Curves.bounceInOut;
+                var tween = Tween(begin: begin, end: end)
+                    .chain(CurveTween(curve: curve));
+                var offsetAnimation = animation.drive(tween);
+                return SlideTransition(
+                  position: offsetAnimation,
+                  child: child,
+                );
+              },
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return AuthOtpView(
+                  mobileNumberDetails: (
+                    _selectedCountryCode,
+                    _phoneNumberController.text
+                  ),
+                  verificationCode: verificationCode,
+                );
+              },
             ),
           );
         },
-      ),
-    );
+        codeAutoRetrievalTimeout: (String verficationId) {},
+        phoneNumber: _phoneNumberController.text.trim().toString());
   }
 }

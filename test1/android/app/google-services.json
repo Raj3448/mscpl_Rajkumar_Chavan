@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "87834972004",
+    "project_id": "phone-otp-signup",
+    "storage_bucket": "phone-otp-signup.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87834972004:android:5e8b3649c3a34e456af471",
+        "android_client_info": {
+          "package_name": "com.example.test1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDH_cemxGtLZa8fdiaN36k97abOLfW6TVs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
